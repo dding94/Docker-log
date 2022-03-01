@@ -31,6 +31,7 @@
 - 업로드 파일을 외부 스토리지와 링크하여 사용하거나 별도의 저장소가 필요
 - 세션이나 캐시를 memcached나 redis와 같은 외부로 분리
 
+***
 도커는 다양한 데이터베이스를 손쉽게 생성/삭제가 가능하다.
 
 맥북 m1 버전에서 MySQL 이미지 다운로드 및 컨테이너 실행을 위하여 `docker pull mysql:5.7` 하면 에러가 생긴다.
@@ -52,6 +53,8 @@ create database wp CHARACTER SET utf8;
 grant all privileges on wp.* to wp@'%' identified by 'wp';
 flush privileges;
 ```
+[참고] 컨테이너 실행할 때 뒤에
+- `--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci` 를 입력하면 한글이 깨지지 않는다.
 
 exec 명령어
 - exec 명령어는 run 명령어와 달리 실행중인 도커 컨테이너에 접속할 때 사용하며 컨테이너 안에 ssh server 등을 설치하지 않고 exec 명령어로 접속합니다. 
@@ -66,3 +69,35 @@ docker run -d -p 8080:80 \
   wordpress
 ```
 앞에 만든 MySQL을 실행한 상태에서 생성한 뒤 8080 포트로 접속
+
+---
+도커 기본 명령어
+
+ps 명령어
+- `docker ps`: 실행중인 컨테이너 목록을 확인하는 명령어
+- `dokcer ps -a`: 중지된 컨테이너도 확인 -a 옵션 붙이기
+
+stop 명령어
+- `docker stop [OPTIONS] CONTAINER [CONTAINER...]`
+- 실행중인 컨테이너를 중지하는 명령어. 하나 또는 여러개(띄어쓰기) 중지 가능
+
+rm 명령어
+- `docker rm [OPTIONS] CONTAINER [CONTAINER..]`
+- 종료된 컨테이너를 완전히 제거하는 명령어
+
+logs 명령어
+- `docker logs [OPTIONS] CONTAINER`
+- 컨테이너가 정상적으로 동작하는지 로그를 확인 할 수 있다.
+
+images 명령어
+- `docker images [OPTIONS] [REPOSITORY[:TAG]]`
+- 도커가 다운로드한 이미지 목록을 보는 명령어
+- `docker rmi image`: 이미지 삭제, 실행중인 컨테이너는 삭제가 안된다.
+
+network 명령어
+- `docker network cerate [OPTIONS] NETWORK`
+  - 도커 컨테이너끼리 이름으로 통신할 수 있는 가상 네트워크를 만든다.
+- `docker network connect [OPTIONS] NETWORK CONTAINER`
+  - 기존에 생성된 컨테이너에 네트워크를 추가합니다.
+- `docker network ls` , `docker network rm [xxx]`; 
+  - 도커에 생성된 네트워크 리스트를 봅니다. , xxx 네트워크 삭제
