@@ -32,23 +32,26 @@
 - 세션이나 캐시를 memcached나 redis와 같은 외부로 분리
 
 ***
-도커는 다양한 데이터베이스를 손쉽게 생성/삭제가 가능하다.
+
+## 도커는 다양한 데이터베이스를 손쉽게 생성/삭제가 가능하다.
 
 맥북 m1 버전에서 MySQL 이미지 다운로드 및 컨테이너 실행을 위하여 `docker pull mysql:5.7` 하면 에러가 생긴다.
 `--platform` 으로 명시를 해줘야 정상 작동한다.
-```aidl
+```dockerfile
 docker pull --platform linux/amd64 mysql:5.7
 ```
 
 MySQL 컨테이너를 생성, 실행 할 때도 플랫폼 명시를 해야한다.
-```aidl
+```dockerfile
 docker run --platform linux/amd64 --name mysql -d -p 3306:3306 -e MYSQL_ALLOW_EMPTY_PASSWORD=true mysql:5.7
 ```
 
 MySQL 데이터베이스 실행하기
-```
-docker exec -it mysql mysql  // exec 명령어로 접속
-//테이블 만들기
+```dockerfile
+#exec 명령어로 접속
+docker exec -it mysql mysql 
+
+#테이블 만들기
 create database wp CHARACTER SET utf8;
 grant all privileges on wp.* to wp@'%' identified by 'wp';
 flush privileges;
@@ -60,7 +63,7 @@ exec 명령어
 - exec 명령어는 run 명령어와 달리 실행중인 도커 컨테이너에 접속할 때 사용하며 컨테이너 안에 ssh server 등을 설치하지 않고 exec 명령어로 접속합니다. 
 
 워드프레스 블로그 실행하기
-```aidl
+```dockerfile
 docker run -d -p 8080:80 \
   -e WORDPRESS_DB_HOST=host.docker.internal \
   -e WORDPRESS_DB_NAME=wp \
@@ -71,7 +74,7 @@ docker run -d -p 8080:80 \
 앞에 만든 MySQL을 실행한 상태에서 생성한 뒤 8080 포트로 접속
 
 ---
-도커 기본 명령어
+## 도커 기본 명령어
 
 ps 명령어
 - `docker ps`: 실행중인 컨테이너 목록을 확인하는 명령어
@@ -101,3 +104,193 @@ network 명령어
   - 기존에 생성된 컨테이너에 네트워크를 추가합니다.
 - `docker network ls` , `docker network rm [xxx]`; 
   - 도커에 생성된 네트워크 리스트를 봅니다. , xxx 네트워크 삭제
+
+volume 명령어
+- Docker 컨테이너의 생명주기와 관계없이 데이터를 영속적으로 저장할 수 있도록 하는 옵션이다.
+- https://www.daleseo.com/docker-volumes-bind-mounts/ => 자세한 내용 참고
+
+---
+
+## 도커 컴포즈(docker compose)
+- 도커 명령어들은 띄어 쓰기나 명령어를 실수하지 않게 조심 쓰럽게 써야한다 이걸 편하게 해주는 것이 docker-compose 이다
+
+설치 확인
+- `$ docker-compose version`
+
+docker-compose.yml 설정
+```yaml
+version: '2'
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - ./mysql:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+  wordpress:
+    image: wordpress:latest
+    volumes:
+      - ./wp:/var/www/html
+    ports:
+      - "8080:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+```
+
+up 명령어   
+- `docker-compose up -d`
+- docker compose를 이용하여 mysql과 wordpress를 실행한다.
+- docker-compose.yml 파일 위치에 가서 명령어를 입력해야 한다.
+
+down 명령어
+- `docker-compose down`
+- docker compose를 이용하여 mysql과 wordpress를 조욜한다.
+
+---
+
+## 도커 컴포즈 문법
+
+version
+- `version: '3`
+- dokcer-compose.yml 파일의 명세 버전, 버전에 따라 지원하는 도커 엔진 버전도 다름
+
+services
+```yaml
+services:
+ postgres:
+  ..
+ django:
+  ..
+```
+- 실행할 컨테이너 정의
+- docker run --name django와 같다고 생각할 수 있음
+
+image
+```yaml
+services:
+ django:
+  image: django-sample
+```
+- 컨테이너에 사용할 이미지 이름과 태그
+- 태그를 생략하면 latest
+- 이미지가 없으면 자동으로 pull
+
+ports
+```yaml
+services: 
+ django:
+  ..
+  ports:
+   - "8000:8000"
+```
+- 컨테이너와 연겨랄 포트(들)
+- {호스트 포트}:{컨테이너 포트}
+
+environment
+```yaml
+services:
+ mysql:
+  ..
+   environment:
+    - MYSQL_ROOT_PASSWORD=somewordpress: '3'
+```
+- 컨테이너에서 사용할 환경변수(들)
+- {환경변수 이름}:{값}
+
+volumes
+```yaml
+services:
+ django:
+  ..
+   volumes:
+    - ./app:/app
+```
+- 마운트하려는 디렉터리(들)
+- {호스트 디렉터리}:{컨테이너 디렉터리}
+
+restart
+```yaml
+services:
+ django:
+  restart: always
+```
+- 재시작 정책
+  - restart: "no"
+  - restart: always
+  - restart: on-failure
+  - restart: unless-stopped
+
+build
+```yaml
+ django:
+  build:
+   context:
+   dockerfile: ./compose/dajngo/Dockerfile-dev
+```
+- 이미지를 자체 빌드 후 사용
+- image 속성 대신 사용, 별도의 도커 파일 필요
+
+---
+
+## 도커 컴포즈 명령어
+
+### up   
+docker-compose.yml 에 정의된 컨테이너를 실행
+- docker-compose up
+- docker-compose up -d
+  - docker run의 -d 옵션과 동일
+- docker-compose up --force-recreate
+  - 컨테이너를 새로 만들기
+- docker-compose up --build
+  - 도커 이미지를 다시 빌드(build 로 선언했을 때만)
+
+### start
+멈춘 컨테이너를 재개
+- docker-compose start
+- docker-compose start wordpress
+  - wordpress 컨테이너만 재개
+
+### restart
+컨테이너를 재시작
+- docker-compose restart
+- docker-compose restart wordpress
+
+### stop
+컨테이너 멈춤
+- docker-compose stop
+- docker-compose stop wordpress
+
+### down
+컨테이너 종료하고 삭제
+- docker-compose down
+
+### logs
+컨테이너의 로그
+- docker-compose logs
+- docker-compose logs -f
+  - 로그 follow
+
+### ps
+컨테이너 목록
+- docker-compose ps
+
+### exec
+실행 중인 컨테이너 에서 명령어 실행
+- docker-compose exec {컨테이너 이름}{명령어}
+- docker-compose exec wordpress bash
+
+### build
+컨테이너 build 부분에 정의된 내용대로 빌드, build로 선언된 컨테이너만 빌드됨
+- docker-compose build
+- docker-compose build wordpress
+
+---
+
