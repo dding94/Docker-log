@@ -294,3 +294,8 @@ docker-compose.yml 에 정의된 컨테이너를 실행
 
 ---
 
+### 개인실습
+nginx 컨테이너 만들기 , 포트 50000 연결 , index.html 파일을 만들고 컨테이너 실행(volume 옵션 활용)
+- 이미지 만들기: `docker pull --platform linux/amd64 nginx` 
+- 컨테이너 실행: `docker run -d --rm -p 80:80 -v /Users/ddingu/mg:/usr/share/nginx/html nginx`
+- 절대경로를 써줘야 굴러간다는 사실을 알았다. 그 이유까지는 잘 모르겠다.
