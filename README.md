@@ -295,7 +295,20 @@ docker-compose.yml 에 정의된 컨테이너를 실행
 ---
 
 ### 개인실습
-nginx 컨테이너 만들기 , 포트 50000 연결 , index.html 파일을 만들고 컨테이너 실행(volume 옵션 활용)
+__nginx 컨테이너 만들기 , 포트 50000 연결 , index.html 파일을 만들고 컨테이너 실행(volume 옵션 활용)__
 - 이미지 만들기: `docker pull --platform linux/amd64 nginx` 
 - 컨테이너 실행: `docker run -d --rm -p 80:80 -v /Users/ddingu/mg:/usr/share/nginx/html nginx`
 - 절대경로를 써줘야 굴러간다는 사실을 알았다. 그 이유까지는 잘 모르겠다.
+
+
+__php cli 컨테이너 실행하기__
+- 이미지: php:7
+- 브라우저 접속이 아닌 CLI 테스트.
+
+`<?php phpinfo() ?>`
+1. hello.php를 php contatiner로 실행 (-v 옵션으로 hello.php를 연결)
+2. 실행결과(php 설정 정보)를 확인
+
+답: `docker pull php:7`   
+실행: `docker run --rm -v /Users/ddingu/mg/hello.php:/app/hello.php php:7 php /app/hello.php`
+- /Users/ddingu/mg/hello.php <<< 해당 경로에 hello.php 가 있다는 뜻 이것도 절대경로 사용
