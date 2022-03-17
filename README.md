@@ -312,3 +312,71 @@ __php cli 컨테이너 실행하기__
 답: `docker pull php:7`   
 실행: `docker run --rm -v /Users/ddingu/mg/hello.php:/app/hello.php php:7 php /app/hello.php`
 - /Users/ddingu/mg/hello.php <<< 해당 경로에 hello.php 가 있다는 뜻 이것도 절대경로 사용
+
+---
+## 도커 이미지 만들기
+
+이미지
+- 도커는 레이어드 파일 시스템 기반
+- AUFS, BTRFS, Overlayfs, ...
+- 이미지는 프로세스가 실행되는 파일들의 집합
+- 프로세스는 환경(파일)을 변경할 수 있음
+- 이 환경을 저장해서 새로운 이미지를 만든다.
+- <details><summary> 상태변화 </summary>
+
+  ![스크린샷 2022-03-17 오후 11 26 36](https://user-images.githubusercontent.com/21376853/158828122-2a8409bf-777a-4a70-9b64-6e105c8c7ffd.png)
+</details>
+
+예시 - Git 설치
+```dockerfile
+$ docker run -it --name git ubuntu:latest bash
+root@2f8bfff679f9:/# git
+bash: git: command not found
+root@2f8bfff679f9:/# apt-get update
+root@2f8bfff679f9:/# apt-get install -y git
+root@2f8bfff679f9:/# git --version
+```
+
+TDD 하듯이..
+- 한번에 성공하는 빌드는 없다.
+- 많은 실패를 경험하고 성공할 때 까지
+- 빌드를 성공해도 리팩토링을 통해 더 최적화된 이미지 생성
+
+
+이미지 빌드하기
+```dockerfile
+docker build -t {이미지명:이미지태그} {빌드 컨텍스트} 
+$ docker build -t sample:1 .
+```
+현재 디렉토리의 Dockerfile로 빌드
+- -f<Dockerfile 위치> 옵션을 사용해 다른 위치의 Dockerfile 파일 사용 가능
+- -t 명령어로 도커 이미지 이름 지정
+- {네임스페이스}/{이미지이름}:{태그} 형식
+
+마지막에는 빌드 컨텍스트 위치를 지정
+- 현재 디렉터리를 의미하는 점(.)을 주로 사용
+- 필요한 경우 다른 디렉터리를 지정할 수 있음
+
+Git을 설치한 ubuntu 이미지
+```dockerfile
+FROM ubuntu:latest
+
+RUN apt-get update
+RUN apt-get install -y git
+```
+위의 Dockerfile을 만들고 빌드 합니다.
+```dockerfile
+$ docker build -t ubuntu:git-dockerfile .
+$ docker images | grep ubuntu
+```
+
+도커 파일로 관리하면 장점!
+- 최초부터 어떤 작업을 걸쳐 프로그램이 설쳐했는지 기록으로 확인이 가능하다.
+- 재설치, 버전업데이트에 용이
+
+.dockerignore
+- .gitignore와 비슷한 역할
+- 도커 빌드 컨텍스트에서 지정된 패턴의 파일을 무시
+- .git이나 민감한 정보를 제외하는 용도로 주로 사용
+- .git이나 에셋 디렉터리만 제외시켜도 빌드 속도 개선
+- 이미지 빌드 시에 사용하는 파일은 제외시키면 안됨
