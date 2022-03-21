@@ -380,3 +380,36 @@ $ docker images | grep ubuntu
 - .git이나 민감한 정보를 제외하는 용도로 주로 사용
 - .git이나 에셋 디렉터리만 제외시켜도 빌드 속도 개선
 - 이미지 빌드 시에 사용하는 파일은 제외시키면 안됨
+
+### FROM
+- `FROM [--platform=<platform>] <image>[:<tag>] [AS <name>]`
+- 베이스 이미지 지정
+- FROM node:12 , FROM ubuntu:latest
+### COPY
+- `COPY [--chown=<user>:<group>] <src>... <dest>`
+- 파일 또는 디렉토리 추가
+- COPY index.html/var/www/html, COPY ./app/usr/src/app
+### RUN
+- `RUN <command>`
+- 명령어 실행
+- RUN apt-get update, RUN npm install
+### WORKDIR
+- `WORKDIR /path/to/workdir`
+- 작업 디렉토리 변경
+- WORKDIR /app
+- EXPOSE -> 컨테이너에서 사용하는 포트 정보
+### CMD
+```dockerfile
+CMD ["executable","param1","param2"]
+CMD command param1 param2
+```
+- 컨테이너 생성시 실행할 명령어
+- CMD ["node", "app.js"]
+- CMD node app.js
+
+### 빌드 캐시
+- 빌드캐시는 빌드 중에 동일한 이미지 레이어가 있으면 빌드하지 않고 재사용.
+  - 빌드속도 향상, 도커 이미지레이어 저장공간을 최소화
+- 레이어 저장공간에 이전에 생성한 동일 이미지 레이어가 있으면 재사용
+- 이미지 레이어가 변경되면 하위 이미지 레이어는 데이터가 같아도 캐시를 사용하지 못함
+- 중요! 이미지 레이어 수정이 빈번한 dockerfile명령어는 최대한 마지막에 쓰자
